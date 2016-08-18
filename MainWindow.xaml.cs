@@ -43,7 +43,21 @@ namespace ConsoleBuilder
             string condition = "13 != 37";
 
             XNamespace msbuild = "http://schemas.microsoft.com/developer/msbuild/2003";
-            XDocument projDefinition = XDocument.Load(csproj);
+            XDocument projDefinition;
+            try
+            {
+                projDefinition = XDocument.Load(csproj);
+            }
+            catch (System.Xml.XmlException e)
+            {
+                Console.WriteLine(e.Message);
+                Console.WriteLine("Exception object Line, pos: (" + e.LineNumber + "," + e.LinePosition + ")");
+
+                MessageBox.Show("Invalid XML Exception on line: " + e.LineNumber + ", pos: " + e.LinePosition + ".");
+
+                return;
+            }
+
             var project = projDefinition
                 .Element(msbuild + "Project");
 
