@@ -1,4 +1,5 @@
 ﻿using Microsoft.Build.BuildEngine;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,7 +24,10 @@ namespace ConsoleBuilder
         public string User { get; set; }
         public string Module { get; set; }
         public string Path { get; set; } // To be hidden from UI
+        public bool HasDependencies { get; set; }
     }
+
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -83,6 +87,52 @@ namespace ConsoleBuilder
                 var linkElement = new XElement(msbuild + "Compile");
                 linkElement.SetAttributeValue("Include", link);
                 itemGroup.Add(linkElement);
+
+                //read and add dependencies
+
+                string jsonDependencyPath = dirPath + "\\" + link.Substring(link.IndexOf("\\") + 1).Replace("Cmd.cs", "Cmd.json");
+                if (System.IO.File.Exists(jsonDependencyPath))
+                {
+                    DependencyJObject dependency = JsonConvert.DeserializeObject<DependencyJObject>(System.IO.File.ReadAllText(jsonDependencyPath));
+                    foreach (string dependencyPath2 in dependency.Dependencies)
+                    {
+                        string dependencyPath = dirPath + "\\" + link.Substring(link.IndexOf("\\") + 1).Substring(0, link.IndexOf("\\") + 1) + "\\" + dependencyPath2;
+                        string dependencyNameWithoutDirectory = dependencyPath.Substring(dependencyPath.LastIndexOf('\\') + 1);
+                        if (dependencyPath.EndsWith(".Designer.cs"))
+                        {
+                            var compileIncludeTag = new XElement(msbuild + "Compile");
+                            compileIncludeTag.SetAttributeValue("Include", dependencyPath);
+
+                            var dependentUponTag = new XElement(msbuild + "DependentUpon", dependencyNameWithoutDirectory.Replace(".Designer.cs", ".cs"));
+
+                            compileIncludeTag.Add(dependentUponTag);
+                            itemGroup.Add(compileIncludeTag);
+                        }
+
+                        if (dependencyPath.EndsWith(".resx"))
+                        {
+                            var embeddedResourceTag = new XElement(msbuild + "EmbeddedResource");
+                            embeddedResourceTag.SetAttributeValue("Include", dependencyPath);
+
+                            var dependentUponTag = new XElement(msbuild + "DependentUpon", dependencyNameWithoutDirectory.Replace(".resx", ".cs"));
+
+                            embeddedResourceTag.Add(dependentUponTag);
+                            itemGroup.Add(embeddedResourceTag);
+                        }
+                        if (dependencyPath.EndsWith("Form.cs"))
+                        {
+                            var compileIncludeTag = new XElement(msbuild + "Compile");
+                            compileIncludeTag.SetAttributeValue("Include", dependencyPath);
+
+                            var subtypeTag = new XElement(msbuild + "SubType", "Form");
+
+                            compileIncludeTag.Add(subtypeTag);
+                            itemGroup.Add(compileIncludeTag);
+                        }
+                    }
+                }
+
+
             }
 
             projDefinition.Save(csproj);
@@ -109,6 +159,12 @@ namespace ConsoleBuilder
                         string fileName = currentFile.Substring(dir.Length + 1);
                         moduleListing.Module = fileName.Substring(0, fileName.Length - fileExtension.Length);
                         moduleListing.Path = "Users\\" + moduleListing.User + "\\" + fileName;
+                        string jsonDependencyPath = currentFile.Replace("Cmd.cs", "Cmd.json");
+                        if (System.IO.File.Exists(jsonDependencyPath))
+                            moduleListing.HasDependencies = true;
+                        else
+                            moduleListing.HasDependencies = false;
+
                         modules.Add(moduleListing);
                     }
 
