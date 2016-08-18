@@ -18,6 +18,7 @@
         </DataGrid>
         <Button x:Name="ShowCommandsButton" Content="Load" HorizontalAlignment="Left" Margin="299,279,0,0" VerticalAlignment="Top" Width="75" Click="ShowCommandsButton_Click"/>
         <Button x:Name="RemoveAllDependenciesButton" Content="Disable all modules" HorizontalAlignment="Left" Margin="184,279,0,0" VerticalAlignment="Top" Width="110" Click="RemoveAllDependenciesButton_Click"/>
+        <Button x:Name="InstallButton" Content="Install" HorizontalAlignment="Left" Margin="27,264,0,0" VerticalAlignment="Top" Width="75" Click="InstallButton_Click"/>
 
     </Grid>
 </Window>

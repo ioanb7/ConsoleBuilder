@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -37,6 +38,8 @@ namespace ConsoleBuilder
         string dirPath = @"C:\Users\484327\Documents\GitHub\ExcelsiorConsole\Users";
         string csProj = @"C:\Users\484327\Documents\GitHub\ExcelsiorConsole\ExcelsiorConsole.csproj";
         string bubbleFile = @"C:\Users\484327\Documents\GitHub\ExcelsiorConsole\Bubble\bubble.cs";
+        //string pipPath = @"C:\Users\484327\AppData\Local\Programs\Python\Python35-32\Scripts\pip.exe";
+        string pipPath = @"C:\Python27\Scripts\pip.exe";
         public MainWindow()
         {
             InitializeComponent();
@@ -64,11 +67,7 @@ namespace ConsoleBuilder
 
             var project = projDefinition
                 .Element(msbuild + "Project");
-
-            var itemGroups = project
-                .Elements(msbuild + "ItemGroup")
-                .Where(item => item.Attribute("Condition") != null).ToList();
-
+            
             var itemGroup = project
                 .Elements(msbuild + "ItemGroup")
                 .FirstOrDefault(item => item.Attribute("Condition") != null && item.Attribute("Condition").Value.ToString() == condition);
@@ -132,13 +131,11 @@ namespace ConsoleBuilder
                     }
                 }
 
-
             }
 
             projDefinition.Save(csproj);
         }
-
-
+        
         public List<ModuleListing> GetModules()
         {
             var modules = new List<ModuleListing>();
@@ -191,6 +188,52 @@ namespace ConsoleBuilder
             System.IO.File.WriteAllText(bubbleFile, text);
         }
 
+        public string RunProcess(string filename, string arguments)
+        {
+            Process process = new Process();
+            process.StartInfo.FileName = filename;
+            process.StartInfo.Arguments = arguments; // Note the /c command (*)
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.Start();
+            //* Read the output (or the error)
+            string output = process.StandardOutput.ReadToEnd();
+            Console.WriteLine(output);
+            string err = process.StandardError.ReadToEnd();
+            Console.WriteLine(err);
+            process.WaitForExit();
+
+            return output;
+        }
+
+        private void Install(ModuleListing module)
+        {
+            string jsonDependencyPath = dirPath + "\\" + module.Path.Substring(module.Path.IndexOf("\\") + 1).Replace("Cmd.cs", "Cmd.json");
+            if (System.IO.File.Exists(jsonDependencyPath))
+            {
+                DependencyJObject dependency = JsonConvert.DeserializeObject<DependencyJObject>(System.IO.File.ReadAllText(jsonDependencyPath));
+
+                if (dependency.pip != null && dependency.pip.Count > 0)
+                {
+                    string pipInstalled = RunProcess("cmd.exe", "/c " + pipPath + " list");
+                    foreach (string pipDependency in dependency.pip)
+                    {
+                        if (pipInstalled.ToLower().Contains(pipDependency.ToLower()))
+                        {
+                            // dependency installed already=
+                        }
+                        else
+                        {
+                            //install dependency
+                            string result = RunProcess("cmd.exe", "/c "+pipPath+" install " + pipDependency);
+                            pipInstalled += "\r\n" + pipDependency;
+                        }
+                    }
+                }
+            }
+        }
+
         private void BuildButton_Click(object sender, RoutedEventArgs e)
         {
             var links = new List<string>();
@@ -220,5 +263,16 @@ namespace ConsoleBuilder
             CommandsDataGrid.ItemsSource = modules;
         }
 
+        private void InstallButton_Click(object sender, RoutedEventArgs e)
+        {
+
+            foreach (var module in modules)
+            {
+                if (module.HasDependencies == true)
+                {
+                    Install(module);
+                }
+            }
+        }
     }
 }

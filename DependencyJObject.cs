@@ -9,5 +9,6 @@ namespace ConsoleBuilder
     public class DependencyJObject
     {
         public List<string> Dependencies { get; set; }
+        public List<string> pip { get; set; }
     }
 }
