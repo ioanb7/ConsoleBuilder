@@ -32,7 +32,7 @@ namespace ConsoleBuilder
         List<ModuleListing> modules = new List<ModuleListing>();
         string dirPath = @"C:\Users\484327\Documents\GitHub\ExcelsiorConsole\Users";
         string csProj = @"C:\Users\484327\Documents\GitHub\ExcelsiorConsole\ExcelsiorConsole.csproj";
-        string modulesTxt = @"C:\Users\484327\Documents\GitHub\ExcelsiorConsole\Bubble\modules.txt";
+        string bubbleFile = @"C:\Users\484327\Documents\GitHub\ExcelsiorConsole\Bubble\bubble.cs";
         public MainWindow()
         {
             InitializeComponent();
@@ -113,6 +113,14 @@ namespace ConsoleBuilder
             return modules;
         }
 
+        private void MakeLinker(string bubbleFile, string text2)
+        {
+            var text = "using System.Collections.Generic;\r\nnamespace ExcelsiorConsole\r\n{\r\npublic static class CommandsGenerator\r\n{\r\npublic static List<Command> GetCommands(ConsoleWindow cw)\r\n{\r\nList<Command> commands = new List<Command>();\r\n";
+            text += text2.Split(new char[] { '\r', '\n' }).Select(line => line == "" ? "" : "commands.Add(new ExcelsiorConsole.Users." + line.Split(':')[0] + "." + line.Split(':')[1] + "Cmd(cw));").ToList().Aggregate((a, b) => a + "\r\n\t\t" + b);
+            text += "\r\nreturn commands;\r\n}\r\n}\r\n}";
+            System.IO.File.WriteAllText(bubbleFile, text);
+        }
+
         private void BuildButton_Click(object sender, RoutedEventArgs e)
         {
             var links = new List<string>();
@@ -126,12 +134,13 @@ namespace ConsoleBuilder
 
             UpdateXMLProject( csProj, links );
             string text = modulesToAdd.Count == 0 ? "" : modulesToAdd.Aggregate((a, b) => a + "\r\n" + b);
-            System.IO.File.WriteAllText(modulesTxt, text);
+            MakeLinker(bubbleFile, text);
+
         }
         private void RemoveAllDependenciesButton_Click(object sender, RoutedEventArgs e)
         {
             UpdateXMLProject(csProj, new List<string> { });
-            System.IO.File.WriteAllText(modulesTxt, "");
+            MakeLinker(bubbleFile, "");
         }
 
         private void ShowCommandsButton_Click(object sender, RoutedEventArgs e)
