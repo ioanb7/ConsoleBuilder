@@ -35,9 +35,9 @@ namespace ConsoleBuilder
     public partial class MainWindow : Window
     {
         List<ModuleListing> modules = new List<ModuleListing>();
-        string dirPath = @"C:\Users\484327\Documents\GitHub\ExcelsiorConsole\Users";
-        string csProj = @"C:\Users\484327\Documents\GitHub\ExcelsiorConsole\ExcelsiorConsole.csproj";
-        string bubbleFile = @"C:\Users\484327\Documents\GitHub\ExcelsiorConsole\Bubble\bubble.cs";
+        string dirPath = @"C:\Users\catalin.hoha\Documents\GitHub\ExcelsiorConsole\Users";
+        string csProj = @"C:\Users\catalin.hoha\Documents\GitHub\ExcelsiorConsole\ExcelsiorConsole.csproj";
+        string bubbleFile = @"C:\Users\catalin.hoha\Documents\GitHub\ExcelsiorConsole\Bubble\bubble.cs";
         //string pipPath = @"C:\Users\484327\AppData\Local\Programs\Python\Python35-32\Scripts\pip.exe";
         string pipPath = @"C:\Python27\Scripts\pip.exe";
         public MainWindow()
@@ -182,7 +182,7 @@ namespace ConsoleBuilder
 
         private void MakeLinker(string bubbleFile, string text2)
         {
-            var text = "using System.Collections.Generic;\r\nnamespace ExcelsiorConsole\r\n{\r\npublic static class CommandsGenerator\r\n{\r\npublic static List<Command> GetCommands(ConsoleWindow cw)\r\n{\r\nList<Command> commands = new List<Command>();\r\n";
+            var text = "using System.Collections.Generic;\r\nnamespace ExcelsiorConsole\r\n{\r\npublic static class CommandsGenerator\r\n{\r\npublic static List<Command> GetCommands(Console cw)\r\n{\r\nList<Command> commands = new List<Command>();\r\n";
             text += text2.Split(new char[] { '\r', '\n' }).Select(line => line == "" ? "" : "commands.Add(new ExcelsiorConsole.Users." + line.Split(':')[0] + "." + line.Split(':')[1] + "Cmd(cw));").ToList().Aggregate((a, b) => a + "\r\n\t\t" + b);
             text += "\r\nreturn commands;\r\n}\r\n}\r\n}";
             System.IO.File.WriteAllText(bubbleFile, text);
